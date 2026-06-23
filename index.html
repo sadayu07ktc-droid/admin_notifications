@@ -12,6 +12,8 @@
   body { -webkit-tap-highlight-color: transparent; }
   .spin { animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .fade { animation: fade .18s ease-out; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 </style>
 </head>
 <body class="min-h-screen w-full bg-gradient-to-br from-amber-50 via-stone-50 to-emerald-50">
@@ -28,25 +30,50 @@
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbw4UvKuRrAQ_3Ldm8U0VJqfjfBQUSYaTEdrxkdXUVN98G68XseCquhDeXfMgU8cVYaY/exec';
 const LIFF_ID = '2010274217-O9sTtyuR';
+const ASSIGN_DRIVER_URL = 'https://liff.line.me/2010274217-BF41B8c2';
 
 const ICONS = {
   bell: '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
   user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
   calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
   wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  warehouse: '<path d="M22 8.35V20a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.35a2 2 0 0 1 1.211-1.838l8-3.5a2 2 0 0 1 1.579 0l8 3.5A2 2 0 0 1 22 8.35Z"/><path d="M6 18h12"/><path d="M6 14h12"/>',
+  truck: '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+  ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
   check: '<path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/>',
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
-  phone: '<path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.832 1.62l-.46.353a1 1 0 0 0-.305 1.21 12.35 12.35 0 0 0 6.433 6.385"/>',
   refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
-  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  retry: '<path d="M3 2v6h6"/><path d="M21 12A9 9 0 0 0 6 5.3L3 8"/><path d="M21 22v-6h-6"/><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"/>',
+  arrowLeft: '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  chevron: '<path d="m9 18 6-6-6-6"/>',
 };
 function icon(name, size = 16, extraClass = '') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${extraClass}">${ICONS[name] || ''}</svg>`;
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="' + extraClass + '">' + (ICONS[name] || '') + '</svg>';
 }
 
 const ROLE_LABELS = { Owner: '🌳 เจ้าของสวน', Team: '🌿 ทีมตัด', Ramp: '🏭 ลานเท', Driver: '🚛 คนขับรถ', Admin: '⚙️ แอดมิน' };
 
+// ── หมวดทั้งหมด (ชิปหน้าแรก) ───────────────────────────────
+const CATS = [
+  { key:'ramp',   title:'ลานเทไม่ตอบ',       sub:'รอตอบแทนลานเท',   icon:'warehouse', countKey:'pendingRamp',   dataKey:'pendingRamp',   card:rampCardHtml,   tone:'amber'  },
+  { key:'driver', title:'ไม่มีคนขับรับงาน',  sub:'จัดหาคนขับ',       icon:'truck',     countKey:'pendingDriver', dataKey:'pendingDriver', card:driverCardHtml, tone:'orange' },
+  { key:'cancel', title:'คนขับขอยกเลิก',     sub:'อนุมัติ/ให้วิ่งต่อ', icon:'ban',       countKey:'pendingCancel', dataKey:'pendingCancel', card:cancelCardHtml, tone:'red'    },
+  { key:'users',  title:'ผู้ใช้ใหม่',         sub:'รออนุมัติเปิดใช้งาน', icon:'user',      countKey:'pendingUsers',  dataKey:'pendingUsers',  card:userCardHtml,   tone:'sky'    },
+  { key:'leave',  title:'ใบลา',              sub:'รออนุมัติ',        icon:'calendar',  countKey:'pendingLeave',  dataKey:'pendingLeave',  card:leaveCardHtml,  tone:'orange' },
+  { key:'repair', title:'แจ้งซ่อม',          sub:'รออนุมัติ',        icon:'wrench',    countKey:'pendingRepair', dataKey:'pendingRepair', card:repairCardHtml, tone:'amber'  },
+];
+function toneClass(tone) {
+  switch (tone) {
+    case 'red':    return 'bg-red-50 text-red-600';
+    case 'orange': return 'bg-orange-50 text-orange-600';
+    case 'sky':    return 'bg-sky-50 text-sky-600';
+    default:       return 'bg-amber-50 text-amber-700';
+  }
+}
+function catByKey(k) { for (var i=0;i<CATS.length;i++) if (CATS[i].key===k) return CATS[i]; return null; }
+
 let DATA = null;
+let VIEW = null; // null = หน้าแรก(ชิป), หรือ key ของหมวด
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -54,33 +81,81 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// ── การ์ด: ผู้ใช้ใหม่รออนุมัติ ──────────────────────────────
-function userCardHtml(u) {
-  const uid = escapeHtml(u.uid);
-  return `
-    <div class="item bg-white border border-amber-200 rounded-2xl p-4 space-y-3" data-uid="${uid}">
-      <div class="flex items-start gap-3">
-        <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-sky-50 text-sky-600 shrink-0">${icon('user', 20)}</div>
-        <div class="min-w-0 flex-1">
-          <p class="font-semibold text-emerald-900 break-words">${escapeHtml(u.name)}</p>
-          <p class="text-sm text-amber-700/80">${escapeHtml(ROLE_LABELS[u.role] || u.role)}${u.phone ? ' · ' + escapeHtml(u.phone) : ''}</p>
-          ${u.registeredAt ? `<p class="text-xs text-amber-600/70 mt-0.5">สมัครเมื่อ ${escapeHtml(u.registeredAt)}</p>` : ''}
-        </div>
-      </div>
-      <button onclick="approveUser('${uid}', this)"
-        class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors">
-        ${icon('check', 15)}อนุมัติ (เปิดใช้งาน)
-      </button>
-    </div>`;
+// ── ส่วนหัวออเดอร์ (ใช้ร่วมในการ์ดงานปฏิบัติการ) ───────────
+function orderHeadHtml(o, iconName, tone) {
+  return ''
+    + '<div class="flex items-start gap-3">'
+    +   '<div class="flex items-center justify-center w-10 h-10 rounded-xl ' + tone + ' shrink-0">' + icon(iconName, 20) + '</div>'
+    +   '<div class="min-w-0 flex-1">'
+    +     '<p class="font-semibold text-emerald-900 break-all">' + escapeHtml(o.orderId) + '</p>'
+    +     '<p class="text-sm text-amber-700/80 truncate">🌳 ' + escapeHtml(o.gardenName) + '</p>'
+    +     '<p class="text-xs text-amber-600/80 mt-0.5">📅 ' + escapeHtml(o.date) + ' ' + escapeHtml(o.time) + ' · 📍 ' + escapeHtml(o.pickup) + ' · 🧺 ' + escapeHtml(String(o.binCount)) + ' ใบ</p>'
+    +   '</div>'
+    + '</div>';
 }
 
-// ── การ์ด: ใบลา / แจ้งซ่อม (มีปุ่ม อนุมัติ/ปฏิเสธ) ──────────
+function rampCardHtml(o) {
+  const oid = escapeHtml(o.orderId);
+  return ''
+    + '<div class="item bg-white border border-amber-300 rounded-2xl p-4 space-y-3" data-order="' + oid + '">'
+    +   orderHeadHtml(o, 'warehouse', 'bg-amber-50 text-amber-700')
+    +   '<p class="text-sm font-semibold text-amber-900">❓ ลานเทไม่ตอบ — มีปาล์มที่ลานไหม?</p>'
+    +   '<div class="flex gap-2">'
+    +     '<button onclick="approveRamp(\'' + oid + '\',\'มีปาล์ม\', this)" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors">' + icon('check', 15) + 'มีปาล์ม</button>'
+    +     '<button onclick="approveRamp(\'' + oid + '\',\'ไม่มีปาล์ม\', this)" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-amber-300 text-amber-800 text-sm font-semibold hover:bg-amber-50 transition-colors">' + icon('x', 15) + 'ไม่มีปาล์ม</button>'
+    +   '</div>'
+    + '</div>';
+}
+
+function driverCardHtml(o) {
+  const oid = escapeHtml(o.orderId);
+  return ''
+    + '<div class="item bg-white border border-amber-300 rounded-2xl p-4 space-y-3" data-order="' + oid + '">'
+    +   orderHeadHtml(o, 'truck', 'bg-orange-50 text-orange-600')
+    +   '<p class="text-sm font-semibold text-amber-900">🚛 ยังไม่มีคนขับรับงานนี้</p>'
+    +   '<div class="flex gap-2">'
+    +     '<button onclick="rebroadcast(\'' + oid + '\', this)" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors">' + icon('retry', 15) + 'กระจายงานอีกครั้ง</button>'
+    +     '<a href="' + ASSIGN_DRIVER_URL + '" target="_blank" rel="noopener" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-amber-300 text-amber-800 text-sm font-semibold hover:bg-amber-50 transition-colors">' + icon('user', 15) + 'หาคนขับเอง</a>'
+    +   '</div>'
+    + '</div>';
+}
+
+function cancelCardHtml(o) {
+  const oid = escapeHtml(o.orderId);
+  return ''
+    + '<div class="item bg-white border border-red-200 rounded-2xl p-4 space-y-3" data-order="' + oid + '">'
+    +   orderHeadHtml(o, 'ban', 'bg-red-50 text-red-600')
+    +   '<p class="text-sm text-red-800">✋ คนขับ' + (o.driverName ? ' <span class="font-semibold">' + escapeHtml(o.driverName) + '</span>' : '') + ' ขอยกเลิกงาน</p>'
+    +   (o.reason ? '<p class="text-xs text-amber-700/90">📝 เหตุผล: ' + escapeHtml(o.reason) + '</p>' : '')
+    +   '<div class="flex gap-2">'
+    +     '<button onclick="decideCancel(\'' + oid + '\',\'approve\', this)" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors">' + icon('check', 15) + 'อนุมัติยกเลิก</button>'
+    +     '<button onclick="decideCancel(\'' + oid + '\',\'reject\', this)" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-emerald-300 text-emerald-700 text-sm font-semibold hover:bg-emerald-50 transition-colors">' + icon('x', 15) + 'ให้วิ่งต่อ</button>'
+    +   '</div>'
+    + '</div>';
+}
+
+function userCardHtml(u) {
+  const uid = escapeHtml(u.uid);
+  return ''
+    + '<div class="item bg-white border border-amber-200 rounded-2xl p-4 space-y-3" data-uid="' + uid + '">'
+    +   '<div class="flex items-start gap-3">'
+    +     '<div class="flex items-center justify-center w-10 h-10 rounded-xl bg-sky-50 text-sky-600 shrink-0">' + icon('user', 20) + '</div>'
+    +     '<div class="min-w-0 flex-1">'
+    +       '<p class="font-semibold text-emerald-900 break-words">' + escapeHtml(u.name) + '</p>'
+    +       '<p class="text-sm text-amber-700/80">' + escapeHtml(ROLE_LABELS[u.role] || u.role) + (u.phone ? ' · ' + escapeHtml(u.phone) : '') + '</p>'
+    +       (u.registeredAt ? '<p class="text-xs text-amber-600/70 mt-0.5">สมัครเมื่อ ' + escapeHtml(u.registeredAt) + '</p>' : '')
+    +     '</div>'
+    +   '</div>'
+    +   '<button onclick="approveUser(\'' + uid + '\', this)" class="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors">' + icon('check', 15) + 'อนุมัติ (เปิดใช้งาน)</button>'
+    + '</div>';
+}
+
 function leaveCardHtml(l) {
   return reqCardHtml({
     iconName: 'calendar', tone: 'bg-orange-50 text-orange-600',
     refId: l.refId, uid: l.uid, type: 'leave', name: l.name,
-    line1: `${escapeHtml(l.leaveType || 'ลา')} · ${escapeHtml(String(l.days))} วัน`,
-    line2: `${escapeHtml(l.dateStart)} – ${escapeHtml(l.dateEnd)}`,
+    line1: escapeHtml(l.leaveType || 'ลา') + ' · ' + escapeHtml(String(l.days)) + ' วัน',
+    line2: escapeHtml(l.dateStart) + ' – ' + escapeHtml(l.dateEnd),
     note: l.note, submittedAt: l.submittedAt
   });
 }
@@ -88,97 +163,167 @@ function repairCardHtml(r) {
   return reqCardHtml({
     iconName: 'wrench', tone: 'bg-amber-50 text-amber-700',
     refId: r.refId, uid: r.uid, type: 'repair', name: r.name,
-    line1: `🚗 ${escapeHtml(r.plate || '—')}`,
-    line2: `อาการ: ${escapeHtml(r.symptom || '—')}${r.repairDate ? ' · ' + escapeHtml(r.repairDate) : ''}`,
+    line1: '🚗 ' + escapeHtml(r.plate || '—'),
+    line2: 'อาการ: ' + escapeHtml(r.symptom || '—') + (r.repairDate ? ' · ' + escapeHtml(r.repairDate) : ''),
     note: r.note, submittedAt: r.submittedAt
   });
 }
 function reqCardHtml(o) {
   const refId = escapeHtml(o.refId);
   const uid = escapeHtml(o.uid);
-  return `
-    <div class="item bg-white border border-amber-200 rounded-2xl p-4 space-y-3" data-ref="${refId}">
-      <div class="flex items-start gap-3">
-        <div class="flex items-center justify-center w-10 h-10 rounded-xl ${o.tone} shrink-0">${icon(o.iconName, 20)}</div>
-        <div class="min-w-0 flex-1">
-          <p class="font-semibold text-emerald-900 break-words">${escapeHtml(o.name)} <span class="text-xs font-normal text-amber-600/70">· ${refId}</span></p>
-          <p class="text-sm text-emerald-800/90">${o.line1}</p>
-          <p class="text-sm text-amber-700/80">${o.line2}</p>
-          ${o.note ? `<p class="text-xs text-amber-600/80 mt-0.5">📝 ${escapeHtml(o.note)}</p>` : ''}
-          ${o.submittedAt ? `<p class="text-xs text-amber-600/70 mt-0.5">ยื่นเมื่อ ${escapeHtml(o.submittedAt)}</p>` : ''}
-        </div>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="decideReq('${refId}','${uid}','${o.type}','approve', this)"
-          class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors">
-          ${icon('check', 15)}อนุมัติ
-        </button>
-        <button onclick="decideReq('${refId}','${uid}','${o.type}','reject', this)"
-          class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-red-300 text-red-700 text-sm font-semibold hover:bg-red-50 transition-colors">
-          ${icon('x', 15)}ปฏิเสธ
-        </button>
-      </div>
-    </div>`;
+  return ''
+    + '<div class="item bg-white border border-amber-200 rounded-2xl p-4 space-y-3" data-ref="' + refId + '">'
+    +   '<div class="flex items-start gap-3">'
+    +     '<div class="flex items-center justify-center w-10 h-10 rounded-xl ' + o.tone + ' shrink-0">' + icon(o.iconName, 20) + '</div>'
+    +     '<div class="min-w-0 flex-1">'
+    +       '<p class="font-semibold text-emerald-900 break-words">' + escapeHtml(o.name) + ' <span class="text-xs font-normal text-amber-600/70">· ' + refId + '</span></p>'
+    +       '<p class="text-sm text-emerald-800/90">' + o.line1 + '</p>'
+    +       '<p class="text-sm text-amber-700/80">' + o.line2 + '</p>'
+    +       (o.note ? '<p class="text-xs text-amber-600/80 mt-0.5">📝 ' + escapeHtml(o.note) + '</p>' : '')
+    +       (o.submittedAt ? '<p class="text-xs text-amber-600/70 mt-0.5">ยื่นเมื่อ ' + escapeHtml(o.submittedAt) + '</p>' : '')
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="flex gap-2">'
+    +     '<button onclick="decideReq(\'' + refId + '\',\'' + uid + '\',\'' + o.type + '\',\'approve\', this)" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors">' + icon('check', 15) + 'อนุมัติ</button>'
+    +     '<button onclick="decideReq(\'' + refId + '\',\'' + uid + '\',\'' + o.type + '\',\'reject\', this)" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-red-300 text-red-700 text-sm font-semibold hover:bg-red-50 transition-colors">' + icon('x', 15) + 'ปฏิเสธ</button>'
+    +   '</div>'
+    + '</div>';
 }
 
-function sectionHtml(title, iconName, count, itemsHtml) {
-  return `
-    <div class="space-y-2">
-      <div class="flex items-center gap-2 px-1">
-        <span class="text-emerald-700">${icon(iconName, 18)}</span>
-        <h2 class="text-sm font-semibold text-emerald-900">${escapeHtml(title)}</h2>
-        ${count > 0 ? `<span class="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-bold">${count}</span>` : ''}
-      </div>
-      ${count > 0 ? `<div class="space-y-2.5">${itemsHtml}</div>`
-                  : `<div class="bg-white/60 border border-dashed border-amber-200 rounded-2xl p-5 text-center text-sm text-amber-600">ไม่มีรายการค้าง</div>`}
-    </div>`;
-}
-
-function render() {
+// ── หน้าแรก: เมนูชิป 6 หมวด ─────────────────────────────────
+function renderLanding() {
   const c = DATA.counts;
   let html = '';
 
-  // header
-  html += `
-    <div class="bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-2xl p-5 shadow-lg text-white">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 class="text-xl sm:text-2xl font-bold flex items-center gap-2">${icon('bell', 24)}แจ้งเตือน
-            ${c.total > 0 ? `<span class="inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-red-500 text-white text-sm font-bold">${c.total}</span>` : ''}
-          </h1>
-          <p class="text-emerald-100 text-sm mt-1">${c.total > 0 ? `มี ${c.total} รายการรอดำเนินการ` : 'ไม่มีงานค้าง เคลียร์หมดแล้ว 🎉'}</p>
-        </div>
-        <button onclick="load(true)" id="refresh-btn" class="flex items-center gap-2 bg-white/15 hover:bg-white/25 transition-colors rounded-xl px-3 py-2 text-sm font-medium">
-          ${icon('refresh', 16, 'refresh-icon')}รีเฟรช
-        </button>
-      </div>
-    </div>`;
+  html += ''
+    + '<div class="bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-2xl p-5 shadow-lg text-white">'
+    +   '<div class="flex items-center justify-between flex-wrap gap-3">'
+    +     '<div>'
+    +       '<h1 class="text-xl sm:text-2xl font-bold flex items-center gap-2">' + icon('bell', 24) + 'แจ้งเตือน'
+    +         (c.total > 0 ? '<span class="inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-red-500 text-white text-sm font-bold">' + c.total + '</span>' : '')
+    +       '</h1>'
+    +       '<p class="text-emerald-100 text-sm mt-1">' + (c.total > 0 ? 'มี ' + c.total + ' รายการรอดำเนินการ · แตะหมวดเพื่อจัดการ' : 'ไม่มีงานค้าง เคลียร์หมดแล้ว 🎉') + '</p>'
+    +     '</div>'
+    +     '<button onclick="load(true)" id="refresh-btn" class="flex items-center gap-2 bg-white/15 hover:bg-white/25 transition-colors rounded-xl px-3 py-2 text-sm font-medium">' + icon('refresh', 16, 'refresh-icon') + 'รีเฟรช</button>'
+    +   '</div>'
+    + '</div>';
 
-  html += sectionHtml('ผู้ใช้ใหม่รออนุมัติ', 'user', c.pendingUsers,
-    DATA.pendingUsers.map(userCardHtml).join(''));
+  html += '<div class="grid grid-cols-2 gap-3 fade">';
+  CATS.forEach(function (cat) {
+    const n = c[cat.countKey] || 0;
+    html += ''
+      + '<button onclick="goView(\'' + cat.key + '\')" class="relative text-left bg-white border ' + (n > 0 ? 'border-amber-300' : 'border-amber-200') + ' rounded-2xl p-4 hover:shadow-md transition-shadow">'
+      +   (n > 0 ? '<span class="absolute top-3 right-3 inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-red-500 text-white text-xs font-bold">' + n + '</span>' : '')
+      +   '<div class="flex items-center justify-center w-11 h-11 rounded-xl ' + toneClass(cat.tone) + ' mb-2">' + icon(cat.icon, 22) + '</div>'
+      +   '<p class="font-semibold text-emerald-900 text-sm leading-tight">' + escapeHtml(cat.title) + '</p>'
+      +   '<p class="text-xs mt-0.5 ' + (n > 0 ? 'text-red-600 font-medium' : 'text-amber-600/70') + '">' + (n > 0 ? n + ' รายการค้าง' : 'ไม่มีค้าง') + '</p>'
+      + '</button>';
+  });
+  html += '</div>';
 
-  html += sectionHtml('ใบลารออนุมัติ', 'calendar', c.pendingLeave,
-    DATA.pendingLeave.map(leaveCardHtml).join(''));
-
-  html += sectionHtml('แจ้งซ่อมรออนุมัติ', 'wrench', c.pendingRepair,
-    DATA.pendingRepair.map(repairCardHtml).join(''));
-
-  html += `
-    <div class="text-center text-xs text-emerald-700/60 pt-2 pb-4">
-      ข้อมูลจาก Google Sheet ผ่าน Apps Script API · อัปเดตล่าสุดอัตโนมัติ
-    </div>`;
+  html += '<div class="text-center text-xs text-emerald-700/60 pt-2 pb-4">ข้อมูลจาก Google Sheet ผ่าน Apps Script API · อัปเดตล่าสุดอัตโนมัติ</div>';
 
   document.getElementById('app').innerHTML = html;
 }
+
+// ── หน้ารายละเอียดของหมวด ───────────────────────────────────
+function renderDetail(key) {
+  const cat = catByKey(key);
+  if (!cat) { VIEW = null; return renderLanding(); }
+  const items = DATA[cat.dataKey] || [];
+  const n = items.length;
+
+  let html = '';
+
+  html += ''
+    + '<div class="flex items-center gap-3">'
+    +   '<button onclick="goBack()" class="flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-amber-200 text-emerald-700 hover:bg-amber-50 transition-colors shrink-0">' + icon('arrowLeft', 18) + '</button>'
+    +   '<div class="flex-1 min-w-0">'
+    +     '<h1 class="text-lg font-bold text-emerald-900 truncate flex items-center gap-2">'
+    +       '<span class="' + (cat.tone === 'red' ? 'text-red-600' : cat.tone === 'sky' ? 'text-sky-600' : cat.tone === 'orange' ? 'text-orange-600' : 'text-amber-700') + '">' + icon(cat.icon, 18) + '</span>'
+    +       escapeHtml(cat.title)
+    +       (n > 0 ? '<span class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-bold">' + n + '</span>' : '')
+    +     '</h1>'
+    +     '<p class="text-xs text-amber-600/70">' + escapeHtml(cat.sub) + '</p>'
+    +   '</div>'
+    +   '<button onclick="load(true)" id="refresh-btn" class="flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-amber-200 text-emerald-700 hover:bg-amber-50 transition-colors shrink-0">' + icon('refresh', 16, 'refresh-icon') + '</button>'
+    + '</div>';
+
+  html += '<div class="space-y-2.5 fade">';
+  if (n === 0) {
+    html += '<div class="bg-white/60 border border-dashed border-amber-200 rounded-2xl p-8 text-center text-sm text-amber-600">ไม่มีรายการค้างในหมวดนี้ 🎉</div>';
+  } else {
+    html += items.map(cat.card).join('');
+  }
+  html += '</div>';
+
+  html += ''
+    + '<button onclick="goBack()" class="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white border border-amber-200 text-emerald-800 text-sm font-medium hover:bg-amber-50 transition-colors">'
+    +   icon('arrowLeft', 15) + 'กลับหน้าแจ้งเตือน'
+    + '</button>';
+
+  document.getElementById('app').innerHTML = html;
+}
+
+function render() {
+  if (VIEW === null) renderLanding();
+  else renderDetail(VIEW);
+}
+
+function goView(key) { VIEW = key; window.scrollTo(0, 0); render(); }
+function goBack()     { VIEW = null; window.scrollTo(0, 0); render(); }
 
 // ── Actions ────────────────────────────────────────────────
 async function post(payload) {
   const res = await fetch(GAS_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // กัน CORS preflight
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload)
   });
   return res.json();
+}
+
+function lockItem(btn) {
+  const wrap = btn.closest('.item');
+  wrap.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+  btn.innerHTML = 'กำลังบันทึก...';
+  return wrap;
+}
+function finishItem(btn, msg) {
+  const wrap = btn.closest('.item');
+  wrap.innerHTML = '<p class="text-sm font-semibold text-emerald-700 flex items-center gap-1.5 py-1">' + icon('check', 15) + escapeHtml(msg) + '</p>';
+  setTimeout(function () { load(true); }, 1200);
+}
+
+async function approveRamp(orderId, answer, btn) {
+  if (!confirm('ยืนยันตอบแทนลานเท: "' + answer + '" ?')) return;
+  lockItem(btn);
+  try {
+    const data = await post({ action: 'adminApproveRamp', orderId: orderId, answer: answer, userId: window._userId });
+    if (data && data.success) finishItem(btn, 'บันทึก "' + answer + '" + กระจายงานคนขับแล้ว');
+    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
+  } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
+}
+
+async function rebroadcast(orderId, btn) {
+  if (!confirm('กระจายงานนี้ให้คนขับอีกครั้ง?')) return;
+  lockItem(btn);
+  try {
+    const data = await post({ action: 'rebroadcastOrder', orderId: orderId, userId: window._userId });
+    if (data && data.success) finishItem(btn, 'กระจายงานให้คนขับแล้ว');
+    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
+  } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
+}
+
+async function decideCancel(orderId, decision, btn) {
+  const label = decision === 'approve' ? 'อนุมัติยกเลิก' : 'ให้คนขับวิ่งต่อ';
+  if (!confirm('ยืนยัน' + label + ' ออเดอร์ ' + orderId + '?')) return;
+  lockItem(btn);
+  try {
+    const data = await post({ action: 'decideCancel', orderId: orderId, decision: decision, userId: window._userId });
+    if (data && data.success) finishItem(btn, decision === 'approve' ? 'อนุมัติยกเลิกแล้ว' : 'แจ้งคนขับให้วิ่งต่อแล้ว');
+    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
+  } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
 }
 
 async function approveUser(targetUid, btn) {
@@ -186,34 +331,20 @@ async function approveUser(targetUid, btn) {
   btn.disabled = true; btn.innerHTML = 'กำลังบันทึก...';
   try {
     const data = await post({ action: 'approveUser', targetUid: targetUid, userId: window._userId });
-    if (data && data.success) {
-      finishItem(btn, '✅ เปิดใช้งานแล้ว');
-    } else {
-      alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render();
-    }
+    if (data && data.success) finishItem(btn, 'เปิดใช้งานแล้ว');
+    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
   } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
 }
 
 async function decideReq(refId, targetUid, type, decision, btn) {
   const label = decision === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ';
-  if (!confirm(`ยืนยัน${label}รายการ ${refId}?`)) return;
-  const wrap = btn.closest('.item');
-  wrap.querySelectorAll('button').forEach(b => b.disabled = true);
-  btn.innerHTML = 'กำลังบันทึก...';
+  if (!confirm('ยืนยัน' + label + 'รายการ ' + refId + '?')) return;
+  lockItem(btn);
   try {
-    const data = await post({ action: 'decideLeaveRepair', refId, targetUid, type, decision, userId: window._userId });
-    if (data && data.success) {
-      finishItem(btn, decision === 'approve' ? '✅ อนุมัติแล้ว' : '❌ ปฏิเสธแล้ว');
-    } else {
-      alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render();
-    }
+    const data = await post({ action: 'decideLeaveRepair', refId: refId, targetUid: targetUid, type: type, decision: decision, userId: window._userId });
+    if (data && data.success) finishItem(btn, decision === 'approve' ? 'อนุมัติแล้ว' : 'ปฏิเสธแล้ว');
+    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
   } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
-}
-
-function finishItem(btn, msg) {
-  const wrap = btn.closest('.item');
-  wrap.innerHTML = `<p class="text-sm font-semibold text-emerald-700 flex items-center gap-1.5 py-1">${icon('check', 15)}${escapeHtml(msg)}</p>`;
-  setTimeout(() => load(true), 1200);
 }
 
 // ── Init / Load ────────────────────────────────────────────
@@ -225,19 +356,19 @@ async function init() {
     window._userId = profile.userId;
     await load(false);
   } catch (e) {
-    document.getElementById('loading').innerHTML = `<p class="text-sm text-red-600 px-6 text-center">โหลดไม่สำเร็จ: ${escapeHtml(e.message || String(e))}</p>`;
+    document.getElementById('loading').innerHTML = '<p class="text-sm text-red-600 px-6 text-center">โหลดไม่สำเร็จ: ' + escapeHtml(e.message || String(e)) + '</p>';
   }
 }
 
 async function load(isRefresh) {
   const btn = document.getElementById('refresh-btn');
-  if (isRefresh && btn) btn.querySelector('.refresh-icon').classList.add('spin');
+  if (isRefresh && btn) { const ri = btn.querySelector('.refresh-icon'); if (ri) ri.classList.add('spin'); }
   try {
-    const res = await fetch(`${GAS_URL}?action=getAdminNotifications&userId=${window._userId}`);
+    const res = await fetch(GAS_URL + '?action=getAdminNotifications&userId=' + window._userId);
     const data = await res.json();
     if (!data.success) {
       const msg = data.error === 'unauthorized' ? 'หน้านี้สำหรับแอดมินเท่านั้น' : (data.error || 'เกิดข้อผิดพลาด');
-      document.getElementById('app').innerHTML = `<div class="bg-white rounded-2xl border border-amber-200 p-8 text-center text-amber-700 mt-6">${escapeHtml(msg)}</div>`;
+      document.getElementById('app').innerHTML = '<div class="bg-white rounded-2xl border border-amber-200 p-8 text-center text-amber-700 mt-6">' + escapeHtml(msg) + '</div>';
       document.getElementById('loading').style.display = 'none';
       return;
     }
@@ -245,9 +376,9 @@ async function load(isRefresh) {
     render();
     document.getElementById('loading').style.display = 'none';
   } catch (e) {
-    if (!isRefresh) document.getElementById('loading').innerHTML = `<p class="text-sm text-red-600 px-6 text-center">เชื่อมต่อไม่ได้</p>`;
+    if (!isRefresh) document.getElementById('loading').innerHTML = '<p class="text-sm text-red-600 px-6 text-center">เชื่อมต่อไม่ได้</p>';
   } finally {
-    if (isRefresh && btn) setTimeout(() => btn.querySelector('.refresh-icon').classList.remove('spin'), 400);
+    if (isRefresh && btn) setTimeout(function () { const ri = btn.querySelector('.refresh-icon'); if (ri) ri.classList.remove('spin'); }, 400);
   }
 }
 
