@@ -115,7 +115,7 @@ function driverCardHtml(o) {
     +   '<p class="text-sm font-semibold text-amber-900">🚛 ยังไม่มีคนขับรับงานนี้</p>'
     +   '<div class="flex gap-2">'
     +     '<button onclick="rebroadcast(\'' + oid + '\', this)" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors">' + icon('retry', 15) + 'กระจายงานอีกครั้ง</button>'
-    +     '<a href="' + ASSIGN_DRIVER_URL + '" target="_blank" rel="noopener" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-amber-300 text-amber-800 text-sm font-semibold hover:bg-amber-50 transition-colors">' + icon('user', 15) + 'หาคนขับเอง</a>'
+    +     '<a href="' + ASSIGN_DRIVER_URL + '?orderId=' + encodeURIComponent(oid) + '" target="_blank" rel="noopener" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-amber-300 text-amber-800 text-sm font-semibold hover:bg-amber-50 transition-colors">' + icon('user', 15) + 'หาคนขับเอง</a>'
     +   '</div>'
     + '</div>';
 }
