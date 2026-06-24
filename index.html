@@ -310,8 +310,20 @@ async function rebroadcast(orderId, btn) {
   lockItem(btn);
   try {
     const data = await post({ action: 'rebroadcastOrder', orderId: orderId, userId: window._userId });
-    if (data && data.success) finishItem(btn, 'กระจายงานให้คนขับแล้ว');
-    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
+    if (data && data.success) {
+      finishItem(btn, 'กระจายงานให้คนขับแล้ว');
+    } else {
+      // กรณีกันซ้ำ (มีคนขับแล้ว / กำลังกระจายอยู่) — ไม่ใช่ error จริง
+      const err = (data && data.error) || '';
+      if (err === 'มีคนขับแล้ว') {
+        finishItem(btn, 'ออเดอร์นี้มีคนขับรับแล้ว');
+      } else if (err === 'กำลังกระจายอยู่') {
+        finishItem(btn, 'กำลังกระจายหาคนขับอยู่แล้ว');
+      } else {
+        alert('ไม่สำเร็จ: ' + (err || 'unknown'));
+        render();
+      }
+    }
   } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
 }
 
