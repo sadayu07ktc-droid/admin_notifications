@@ -6,7 +6,7 @@
 <title>แจ้งเตือน — SSB Admin</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <!-- 🔑 ล็อกอินครั้งเดียวจากแดชบอร์ด (SSO) + ssbFetch · ไฟล์อยู่ repo SSB-SMART-SUPPLY-DASHBOARD -->
-<script src="https://sadayu07ktc-droid.github.io/SSB-SMART-SUPPLY-DASHBOARD/ssb-read.js?v=20261008b"></script>
+<script src="https://sadayu07ktc-droid.github.io/SSB-SMART-SUPPLY-DASHBOARD/ssb-read.js?v=20261008j"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -277,8 +277,14 @@ function goView(key) { VIEW = key; window.scrollTo(0, 0); render(); }
 function goBack()     { VIEW = null; window.scrollTo(0, 0); render(); }
 
 // ── Actions ────────────────────────────────────────────────
+// 🧪 ตอบแทนลานเท → Supabase Edge "order-actions" เฉพาะเครื่องที่เปิด ?edgew=1 (ธงเดียวกับหน้าติดตามสถานะ · localStorage ร่วมโดเมน)
+//    ปุ่มอื่น (กระจายงาน/อนุมัติผู้ใช้/ตัดสินคำขอยกเลิก/ใบลา-แจ้งซ่อม) ส่ง LINE → ยัง GAS · ไม่ถอยอัตโนมัติ (ยิงซ้ำ = แจ้ง LINE ซ้ำ)
+const EDGE_WRITE_URL = 'https://abihhdjcrbvwlkzwvjio.supabase.co/functions/v1/order-actions';
+const EDGE_WRITE_ACTIONS = { adminApproveRamp: 1 };
+(function(){ try{ const q = new URLSearchParams(location.search).get('edgew'); if(q==='1') localStorage.setItem('ssb_edge_writes','1'); if(q==='0') localStorage.removeItem('ssb_edge_writes'); }catch(e){} })();
+function useEdgeWrites(){ try{ return localStorage.getItem('ssb_edge_writes')==='1'; }catch(e){ return false; } }
 async function post(payload) {
-  const res = await fetch(GAS_URL, {
+  const res = await fetch((useEdgeWrites() && EDGE_WRITE_ACTIONS[payload.action]) ? EDGE_WRITE_URL : GAS_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload)
@@ -379,7 +385,8 @@ async function load(isRefresh) {
   const btn = document.getElementById('refresh-btn');
   if (isRefresh && btn) { const ri = btn.querySelector('.refresh-icon'); if (ri) ri.classList.add('spin'); }
   try {
-    const res = await fetch(GAS_URL + '?action=getAdminNotifications&userId=' + window._userId);
+    // ⚡ อ่านจาก Supabase Edge "admin-notify" ก่อน (ssb-read.js · ผลเหมือน GAS ทุกฟิลด์) · พลาด → GAS เดิม
+    const res = await (window.ssbFetch || fetch)(GAS_URL + '?action=getAdminNotifications&userId=' + encodeURIComponent(window._userId || ''));
     const data = await res.json();
     if (!data.success) {
       const msg = data.error === 'unauthorized' ? 'หน้านี้สำหรับแอดมินเท่านั้น' : (data.error || 'เกิดข้อผิดพลาด');
