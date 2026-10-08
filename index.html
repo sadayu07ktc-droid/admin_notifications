@@ -17,6 +17,7 @@
   .fade { animation: fade .18s ease-out; }
   @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 </style>
+  <script src="https://sadayu07ktc-droid.github.io/SSB-SMART-SUPPLY-DASHBOARD/ssb-ui.js?v=20261008i"></script>
 </head>
 <body class="min-h-screen w-full bg-gradient-to-br from-amber-50 via-stone-50 to-emerald-50">
 <div id="app" class="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-5"></div>
@@ -298,17 +299,17 @@ function finishItem(btn, msg) {
 }
 
 async function approveRamp(orderId, answer, btn) {
-  if (!confirm('ยืนยันตอบแทนลานเท: "' + answer + '" ?')) return;
+  if (!(await ssbConfirm('ยืนยันตอบแทนลานเท: "' + answer + '" ?'))) return;
   lockItem(btn);
   try {
     const data = await post({ action: 'adminApproveRamp', orderId: orderId, answer: answer, userId: window._userId });
     if (data && data.success) finishItem(btn, 'บันทึก "' + answer + '" + กระจายงานคนขับแล้ว');
-    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
-  } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
+    else { ssbAlert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
+  } catch (e) { ssbAlert('ผิดพลาด: ' + (e.message || e)); render(); }
 }
 
 async function rebroadcast(orderId, btn) {
-  if (!confirm('กระจายงานนี้ให้คนขับอีกครั้ง?')) return;
+  if (!(await ssbConfirm('กระจายงานนี้ให้คนขับอีกครั้ง?'))) return;
   lockItem(btn);
   try {
     const data = await post({ action: 'rebroadcastOrder', orderId: orderId, userId: window._userId });
@@ -322,43 +323,43 @@ async function rebroadcast(orderId, btn) {
       } else if (err === 'กำลังกระจายอยู่') {
         finishItem(btn, 'กำลังกระจายหาคนขับอยู่แล้ว');
       } else {
-        alert('ไม่สำเร็จ: ' + (err || 'unknown'));
+        ssbAlert('ไม่สำเร็จ: ' + (err || 'unknown'));
         render();
       }
     }
-  } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
+  } catch (e) { ssbAlert('ผิดพลาด: ' + (e.message || e)); render(); }
 }
 
 async function decideCancel(orderId, decision, btn) {
   const label = decision === 'approve' ? 'อนุมัติยกเลิก' : 'ให้คนขับวิ่งต่อ';
-  if (!confirm('ยืนยัน' + label + ' ออเดอร์ ' + orderId + '?')) return;
+  if (!(await ssbConfirm('ยืนยัน' + label + ' ออเดอร์ ' + orderId + '?'))) return;
   lockItem(btn);
   try {
     const data = await post({ action: 'decideCancel', orderId: orderId, decision: decision, userId: window._userId });
     if (data && data.success) finishItem(btn, decision === 'approve' ? 'อนุมัติยกเลิกแล้ว' : 'แจ้งคนขับให้วิ่งต่อแล้ว');
-    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
-  } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
+    else { ssbAlert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
+  } catch (e) { ssbAlert('ผิดพลาด: ' + (e.message || e)); render(); }
 }
 
 async function approveUser(targetUid, btn) {
-  if (!confirm('ยืนยันเปิดใช้งานผู้ใช้นี้?')) return;
+  if (!(await ssbConfirm('ยืนยันเปิดใช้งานผู้ใช้นี้?'))) return;
   btn.disabled = true; btn.innerHTML = 'กำลังบันทึก...';
   try {
     const data = await post({ action: 'approveUser', targetUid: targetUid, userId: window._userId });
     if (data && data.success) finishItem(btn, 'เปิดใช้งานแล้ว');
-    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
-  } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
+    else { ssbAlert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
+  } catch (e) { ssbAlert('ผิดพลาด: ' + (e.message || e)); render(); }
 }
 
 async function decideReq(refId, targetUid, type, decision, btn) {
   const label = decision === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ';
-  if (!confirm('ยืนยัน' + label + 'รายการ ' + refId + '?')) return;
+  if (!(await ssbConfirm('ยืนยัน' + label + 'รายการ ' + refId + '?'))) return;
   lockItem(btn);
   try {
     const data = await post({ action: 'decideLeaveRepair', refId: refId, targetUid: targetUid, type: type, decision: decision, userId: window._userId });
     if (data && data.success) finishItem(btn, decision === 'approve' ? 'อนุมัติแล้ว' : 'ปฏิเสธแล้ว');
-    else { alert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
-  } catch (e) { alert('ผิดพลาด: ' + (e.message || e)); render(); }
+    else { ssbAlert('ไม่สำเร็จ: ' + ((data && data.error) || 'unknown')); render(); }
+  } catch (e) { ssbAlert('ผิดพลาด: ' + (e.message || e)); render(); }
 }
 
 // ── Init / Load ────────────────────────────────────────────
