@@ -281,8 +281,9 @@ function goBack()     { VIEW = null; window.scrollTo(0, 0); render(); }
 //    ปุ่มอื่น (กระจายงาน/อนุมัติผู้ใช้/ตัดสินคำขอยกเลิก/ใบลา-แจ้งซ่อม) ส่ง LINE → ยัง GAS · ไม่ถอยอัตโนมัติ (ยิงซ้ำ = แจ้ง LINE ซ้ำ)
 const EDGE_WRITE_URL = 'https://abihhdjcrbvwlkzwvjio.supabase.co/functions/v1/order-actions';
 const EDGE_WRITE_ACTIONS = { adminApproveRamp: 1 };
-(function(){ try{ const q = new URLSearchParams(location.search).get('edgew'); if(q==='1') localStorage.setItem('ssb_edge_writes','1'); if(q==='0') localStorage.removeItem('ssb_edge_writes'); }catch(e){} })();
-function useEdgeWrites(){ try{ return localStorage.getItem('ssb_edge_writes')==='1'; }catch(e){ return false; } }
+// ✅ 2026-10-09 เปิด Edge เป็นค่าเริ่มทุกเครื่องแล้ว (ทดสอบผ่าน) · ฉุกเฉิน: เปิดลิงก์ด้วย ?edgew=0 = กลับไปใช้ GAS (จำในเครื่อง) · ?edgew=1 = กลับมาใช้ Edge
+(function(){ try{ const q = new URLSearchParams(location.search).get('edgew'); if(q==='0') localStorage.setItem('ssb_edge_writes','0'); if(q==='1') localStorage.removeItem('ssb_edge_writes'); }catch(e){} })();
+function useEdgeWrites(){ try{ return localStorage.getItem('ssb_edge_writes')!=='0'; }catch(e){ return true; } }
 async function post(payload) {
   const res = await fetch((useEdgeWrites() && EDGE_WRITE_ACTIONS[payload.action]) ? EDGE_WRITE_URL : GAS_URL, {
     method: 'POST',
