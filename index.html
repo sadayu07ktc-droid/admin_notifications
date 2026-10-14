@@ -278,14 +278,15 @@ function goBack()     { VIEW = null; window.scrollTo(0, 0); render(); }
 
 // ── Actions ────────────────────────────────────────────────
 // 🧪 ตอบแทนลานเท → Supabase Edge "order-actions" เฉพาะเครื่องที่เปิด ?edgew=1 (ธงเดียวกับหน้าติดตามสถานะ · localStorage ร่วมโดเมน)
-//    ปุ่มอื่น (กระจายงาน/อนุมัติผู้ใช้/ตัดสินคำขอยกเลิก/ใบลา-แจ้งซ่อม) ส่ง LINE → ยัง GAS · ไม่ถอยอัตโนมัติ (ยิงซ้ำ = แจ้ง LINE ซ้ำ)
-const EDGE_WRITE_URL = 'https://abihhdjcrbvwlkzwvjio.supabase.co/functions/v1/order-actions';
-const EDGE_WRITE_ACTIONS = { adminApproveRamp: 1 };
+//    ไม่ถอยไป GAS อัตโนมัติ (ยิงซ้ำ = แจ้ง LINE ซ้ำ) · ฉุกเฉิน ?edgew=0 = ทุกปุ่มกลับไป GAS
+//    2026-10-14: กระจายงานซ้ำ / ตัดสินคำขอยกเลิก / อนุมัติผู้ใช้ / ใบลา-แจ้งซ่อม → Edge "admin-decide" (ธง ?edgew เดียวกัน · ไม่ถอยไป GAS อัตโนมัติ)
+const EDGE_FN = 'https://abihhdjcrbvwlkzwvjio.supabase.co/functions/v1/';
+const EDGE_WRITE_ACTIONS = { adminApproveRamp: 'order-actions', rebroadcastOrder: 'admin-decide', decideCancel: 'admin-decide', approveUser: 'admin-decide', decideLeaveRepair: 'admin-decide' };
 // ✅ 2026-10-09 เปิด Edge เป็นค่าเริ่มทุกเครื่องแล้ว (ทดสอบผ่าน) · ฉุกเฉิน: เปิดลิงก์ด้วย ?edgew=0 = กลับไปใช้ GAS (จำในเครื่อง) · ?edgew=1 = กลับมาใช้ Edge
 (function(){ try{ const q = new URLSearchParams(location.search).get('edgew'); if(q==='0') localStorage.setItem('ssb_edge_writes','0'); if(q==='1') localStorage.removeItem('ssb_edge_writes'); }catch(e){} })();
 function useEdgeWrites(){ try{ return localStorage.getItem('ssb_edge_writes')!=='0'; }catch(e){ return true; } }
 async function post(payload) {
-  const res = await fetch((useEdgeWrites() && EDGE_WRITE_ACTIONS[payload.action]) ? EDGE_WRITE_URL : GAS_URL, {
+  const res = await fetch((useEdgeWrites() && EDGE_WRITE_ACTIONS[payload.action]) ? EDGE_FN + EDGE_WRITE_ACTIONS[payload.action] : GAS_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(payload)
@@ -327,7 +328,7 @@ async function rebroadcast(orderId, btn) {
       const err = (data && data.error) || '';
       if (err === 'มีคนขับแล้ว') {
         finishItem(btn, 'ออเดอร์นี้มีคนขับรับแล้ว');
-      } else if (err === 'กำลังกระจายอยู่') {
+      } else if (err === 'กำลังกระจายอยู่' || err === 'กำลังกระจายงานอยู่') {   // GAS/Edge ตอบคำนี้ (เดิมเทียบไม่ตรง เลยขึ้นเตือนผิด)
         finishItem(btn, 'กำลังกระจายหาคนขับอยู่แล้ว');
       } else {
         ssbAlert('ไม่สำเร็จ: ' + (err || 'unknown'));
