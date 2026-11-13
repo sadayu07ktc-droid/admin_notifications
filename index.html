@@ -64,6 +64,7 @@ const CATS = [
   { key:'users',  title:'ผู้ใช้ใหม่',         sub:'รออนุมัติเปิดใช้งาน', icon:'user',      countKey:'pendingUsers',  dataKey:'pendingUsers',  card:userCardHtml,   tone:'sky'    },
   { key:'leave',  title:'ใบลา',              sub:'รออนุมัติ',        icon:'calendar',  countKey:'pendingLeave',  dataKey:'pendingLeave',  card:leaveCardHtml,  tone:'orange' },
   { key:'repair', title:'แจ้งซ่อม',          sub:'รออนุมัติ',        icon:'wrench',    countKey:'pendingRepair', dataKey:'pendingRepair', card:repairCardHtml, tone:'amber'  },
+  { key:'veq',    title:'แจ้งซ่อมรถ (เช็คก่อนออกรถ)', sub:'รอสั่งแก้ / รอตรวจปิดเคส', icon:'wrench', countKey:'veqRepair', dataKey:'veqRepair', card:veqCardHtml, tone:'red' },
 ];
 function toneClass(tone) {
   switch (tone) {
@@ -170,6 +171,31 @@ function repairCardHtml(r) {
     line2: 'อาการ: ' + escapeHtml(r.symptom || '—') + (r.repairDate ? ' · ' + escapeHtml(r.repairDate) : ''),
     note: r.note, submittedAt: r.submittedAt
   });
+}
+// 🔧 เคสแจ้งซ่อมจากเช็คก่อนออกรถ (Edge vehicle-equipment listRepairs brief) · จัดการที่หน้าอุปกรณ์ติดรถ แท็บ 🔧 แจ้งซ่อม
+const VEQ_EDGE = 'https://abihhdjcrbvwlkzwvjio.supabase.co/functions/v1/vehicle-equipment';
+const VEQ_FIX_URL = '/SSB-SMART-SUPPLY-DASHBOARD/vehicle-equipment.html?view=fix';
+async function veqRepairs() {
+  try {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch(VEQ_EDGE + '?action=listRepairs&brief=1&userId=' + encodeURIComponent(window._userId || ''), { signal: ctl.signal, cache: 'no-store' });
+    clearTimeout(t); const d = await r.json(); return d && d.ok ? d : null;
+  } catch (e) { return null; }
+}
+function veqCardHtml(c) {
+  const fixed = c.status === 'fixed';
+  return ''
+    + '<div class="item bg-white border ' + (fixed ? 'border-sky-200' : 'border-red-200') + ' rounded-2xl p-4 space-y-3">'
+    +   '<div class="flex items-start gap-3">'
+    +     '<div class="flex items-center justify-center w-10 h-10 rounded-xl ' + (fixed ? 'bg-sky-50 text-sky-700' : 'bg-red-50 text-red-600') + ' shrink-0">' + icon('wrench', 20) + '</div>'
+    +     '<div class="min-w-0 flex-1">'
+    +       '<p class="font-semibold text-emerald-900 break-words">🚚 ' + escapeHtml(c.plate || '—') + ' <span class="text-xs font-normal ' + (fixed ? 'text-sky-700' : 'text-red-600') + '">· ' + escapeHtml(c.status_label || '') + '</span></p>'
+    +       '<p class="text-sm text-emerald-800/90">' + (c.fm_no ? 'ข้อ ' + c.fm_no + ' ' : '') + escapeHtml(c.name || '') + ((c.parts || []).length ? ': <b>' + escapeHtml(c.parts.join(', ')) + '</b>' : '') + '</p>'
+    +       '<p class="text-xs text-amber-600/80 mt-0.5">แจ้งโดย ' + escapeHtml(c.reported_by || '—') + ' · ' + escapeHtml(c.check_date ? +c.check_date.slice(8, 10) + '/' + +c.check_date.slice(5, 7) + '/' + String(+c.check_date.slice(0, 4) + 543).slice(2) : '') + (c.age_days ? ' · ค้าง ' + c.age_days + ' วัน' : '') + '</p>'
+    +     '</div>'
+    +   '</div>'
+    +   '<a href="' + VEQ_FIX_URL + '&id=' + encodeURIComponent(c.id) + '" class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors">' + (fixed ? '✅ ตรวจรูป / ปิดเคส' : '🛠️ สั่งแก้ ส่งให้คนขับ') + '</a>'
+    + '</div>';
 }
 function reqCardHtml(o) {
   const refId = escapeHtml(o.refId);
@@ -397,6 +423,9 @@ async function load(isRefresh) {
       return;
     }
     DATA = data;
+    const vq = await veqRepairs();   // 🔧 พลาด/ช้า = ไม่แสดงหมวดนี้เพิ่ม (หมวดอื่นทำงานปกติ)
+    DATA.veqRepair = vq ? vq.cases : [];
+    DATA.counts = Object.assign({}, DATA.counts, { veqRepair: DATA.veqRepair.length, total: (Number(DATA.counts && DATA.counts.total) || 0) + DATA.veqRepair.length });
     render();
     document.getElementById('loading').style.display = 'none';
   } catch (e) {
